@@ -1,0 +1,144 @@
+#include <Arduino.h>
+#include <Encoder.h> 
+
+Encoder encoder_fleft(13,12); // encoder pins for front left motor A/B
+Encoder encoder_bleft(9,8);  // encoder pins for back left motor A/B
+Encoder encoder_fright(11,10);  // encoder pins for front right motor A/B
+Encoder encoder_bright(14,15);  // encoder pins for back right motor A/B
+
+const uint8_t LF_PWM = 2; // 9
+const uint8_t LF_BACK = 4; //10 
+const uint8_t LF_FORW = 3; // 11
+
+const uint8_t LB_PWM = 7; // 6  
+const uint8_t LB_BACK = 6; // 7 
+const uint8_t LB_FORW = 5; // 8
+
+const uint8_t RF_PWM = 21; // 13
+const uint8_t RF_BACK = 19; // 15 
+const uint8_t RF_FORW = 20; // 14
+
+const uint8_t RB_PWM = 16; // 19
+const uint8_t RB_BACK = 17; // 18
+const uint8_t RB_FORW = 18; // 17
+
+// Motor Control function
+void Move_motor(int speed_pwm,const uint8_t pwm,const uint8_t forw,const uint8_t back)
+{
+  if(speed_pwm >= 0)
+  {
+    digitalWrite(forw, HIGH);
+    digitalWrite(back, LOW);
+    analogWrite(pwm, abs(speed_pwm));
+  }
+  else if(speed_pwm < 0)
+  {
+    digitalWrite(forw, LOW);
+    digitalWrite(back, HIGH);
+    analogWrite(pwm, abs(speed_pwm));
+  }
+}
+
+void setpins()
+{
+  pinMode(LF_FORW,OUTPUT);
+  pinMode(LF_BACK,OUTPUT);
+  pinMode(RF_FORW,OUTPUT);
+  pinMode(RF_BACK,OUTPUT);
+  pinMode(LF_PWM,OUTPUT);
+  pinMode(RF_PWM,OUTPUT);
+  pinMode(LB_FORW,OUTPUT);
+  pinMode(LB_BACK,OUTPUT);
+  pinMode(RB_FORW,OUTPUT);
+  pinMode(RB_BACK,OUTPUT);
+  pinMode(LB_PWM,OUTPUT);
+  pinMode(RB_PWM,OUTPUT);
+
+  digitalWrite(RF_FORW, HIGH);
+  digitalWrite(RF_BACK, LOW);
+  digitalWrite(LF_FORW, HIGH);
+  digitalWrite(LF_BACK, LOW);
+  digitalWrite(RB_FORW, HIGH);
+  digitalWrite(RB_BACK, LOW);
+  digitalWrite(LB_FORW, HIGH);
+  digitalWrite(LB_BACK, LOW);
+}
+
+// stop movement
+void stop()
+{
+  digitalWrite(LF_FORW, 0);
+  digitalWrite(LF_BACK, 0);
+  digitalWrite(RF_FORW, 0);
+  digitalWrite(RF_BACK, 0);
+  analogWrite(LF_PWM, 0);
+  analogWrite(RF_PWM, 0);
+  digitalWrite(LB_FORW, 0);
+  digitalWrite(LB_BACK, 0);
+  digitalWrite(RB_FORW, 0);
+  digitalWrite(RB_BACK, 0);
+  analogWrite(LB_PWM, 0);
+  analogWrite(RB_PWM, 0);
+}
+
+void setup() 
+{
+  // Configure serial transport
+  Serial.begin(115200);
+  //pinMode(LED_PIN, OUTPUT);
+  //digitalWrite(LED_PIN, HIGH);  
+
+  setpins();
+
+  stop();
+  // delay(2000);
+}
+
+// Initialize starting loop paramaters for calculating velocity and time
+
+unsigned long prev = 0;
+int old_ct1=0;
+int old_ct2=0;
+int old_ct3=0;
+int old_ct4=0;
+float ticks_per_meter = 33000.1;
+
+// maximum time that the system should wait before stopping the motor
+// if there is no velocity command
+int max_cmd_hold_time = 3000;
+
+void loop() 
+{
+
+  // count encoder ticks
+  int ct1 = encoder_fleft.read();
+  int ct2 = encoder_fright.read();
+  int ct3 = encoder_bleft.read();
+  int ct4 = encoder_bright.read();
+
+
+  // Move the motors with the output of the pid
+  // Move_motor(100,LF_PWM,LF_FORW,LF_BACK);
+  Move_motor(100,LB_PWM,LB_FORW,LB_BACK);
+  // Move_motor(100,RF_PWM,RF_FORW,RF_BACK);
+  // Move_motor(100,RB_PWM,RB_FORW,RB_BACK);
+
+  // take the old encoder ticks and time for calculating velocity
+  old_ct1 = encoder_fleft.read();
+  old_ct2 = encoder_fright.read();
+  old_ct3 = encoder_bleft.read();
+  old_ct4 = encoder_bright.read();
+  delay(25);
+  Serial.print(old_ct1);
+  Serial.print(",");
+  Serial.print(old_ct3);
+  Serial.print(",");
+  Serial.print(old_ct2);
+  Serial.print(",");
+  Serial.print(old_ct4);
+  Serial.println();
+}
+
+// void loop() {
+//   delay(100);
+// }
